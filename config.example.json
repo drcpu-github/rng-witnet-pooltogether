@@ -1,0 +1,11 @@
+{
+    "rng_witnet_address": "",
+    "max_fee": "",
+    "goerli": {
+        "prize_strategy_addresses": [
+            ""
+        ],
+        "witnet_request_board_address": "",
+        "witnet_request_randomness_address": ""
+    }
+}

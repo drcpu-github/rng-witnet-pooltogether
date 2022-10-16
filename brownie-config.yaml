@@ -1,0 +1,13 @@
+dependencies:
+    - OpenZeppelin/openzeppelin-contracts@4.3.2
+    - pooltogether/pooltogether-rng-contracts@1.4.0
+    - witnet/witnet-solidity-bridge@0.5.7
+compiler:
+    solc:
+        remappings:
+            - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.2'
+            - '@pooltogether/pooltogether-rng-contracts=pooltogether/pooltogether-rng-contracts@1.4.0'
+            - '@witnet/witnet-solidity-bridge=witnet/witnet-solidity-bridge@0.5.7'
+dotenv: .env
+wallets:
+    from_key: ${PRIVATE_KEY}

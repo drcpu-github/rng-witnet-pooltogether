@@ -2,7 +2,7 @@ import time
 
 from brownie import accounts, config, RngWitnet
 
-# This scripts works as an example.
+# This script serves as an example for the steps required to fetch a random number.
 # It only works if you add yourself as an allowed requester to the contract.
 
 def main():
@@ -21,9 +21,9 @@ def main():
 
     # Wait while the RNG request is being executed
     while True:
-        is_request_complete = rng_witnet.isRequestComplete(contract_request_id)
-        print(f"Is RNG request {contract_request_id} complete: {is_request_complete}")
-        if is_request_complete:
+        is_request_fetchable = rng_witnet.isRngFetchable(contract_request_id)
+        print(f"Is RNG request {contract_request_id} fetchable: {is_request_fetchable}")
+        if is_request_fetchable:
             break
         time.sleep(30)
 

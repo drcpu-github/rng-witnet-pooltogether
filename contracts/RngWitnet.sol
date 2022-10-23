@@ -2,12 +2,10 @@
 
 pragma solidity 0.8.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-import "@pooltogether/pooltogether-rng-contracts/contracts/RNGInterface.sol";
-
 import "@witnet/witnet-solidity-bridge/contracts/UsingWitnet.sol";
-import "@witnet/witnet-solidity-bridge/contracts/requests/WitnetRequest.sol";
+
+import "./RngInterface.sol";
+import "./WitnetRequestRandomness.sol";
 
 contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     event MaxFeeSet(uint256 maxFee);
@@ -19,7 +17,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     event WrbSet(WitnetRequestBoard witnetRequestBoard);
 
     /// @dev Low-level Witnet Data Request composed on construction
-    IWitnetRequest public witnetRequest;
+    WitnetRequestRandomness public witnetRandomnessRequest;
 
     /// @dev The maximum request fee for the Witnet RNG
     uint256 public maxFee;
@@ -45,6 +43,9 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @dev Public constructor
     constructor(WitnetRequestBoard _witnetRequestBoard) UsingWitnet(_witnetRequestBoard) {
         emit WrbSet(_witnetRequestBoard);
+
+        witnetRandomnessRequest = new WitnetRequestRandomness();
+        witnetRandomnessRequest.transferOwnership(msg.sender);
     }
 
     /// @notice Allows this contract to receive Ether
@@ -64,14 +65,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         maxFee = _maxFee;
 
         emit MaxFeeSet(_maxFee);
-    }
-
-    /// @notice Allows owner to set the bytes for an encoded Witnet RNG request
-    /// @param _request The request bytes that make up the request
-    function setRequest(bytes memory _request) external onlyOwner {
-        witnetRequest = new WitnetRequest(_request);
-
-        emit RequestSet(_request);
     }
 
     /// @notice Allows owner to add an address which can generate an RNG request
@@ -95,7 +88,8 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         return (address(0), maxFee);
     }
 
-    /// @notice Sends a request for a random number to the 3rd-party service
+    /// @notice Sends a request for a random number to the 3rd-party service. This request spends the contracts balance and only
+    /// allowed prize strategy contracts (such as MultipleWinners deployments) should be able to call it.
     /// @dev Some services will complete the request immediately, others may have a time-delay
     /// @return requestId The ID of the request used to get the results of the RNG service
     /// @return lockBlock The block number at which the RNG service will start generating time-delayed randomness. The calling contract
@@ -139,8 +133,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @dev Requests a new random number from the Chainlink VRF
     /// @dev The result of the request is returned in the function `fulfillRandomness`
     function _requestRandomness() internal returns (uint32 requestId) {
-        require(witnetRequest.bytecode().length != 0, "RngWitnet/request-not-set");
-
         uint256 _witnetReward = _witnetEstimateReward();
         require(_witnetReward < maxFee, "RngWitnet/max-fee-too-low");
         require(address(this).balance >= _witnetReward, "RngWitnet/balance-too-low");
@@ -149,7 +141,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         requestId = _getNextRequestId();
 
         // Post the raw randomness request
-        uint256 _witnetQueryId = witnet.postRequest{value: _witnetReward}(witnetRequest);
+        uint256 _witnetQueryId = witnet.postRequest{value: _witnetReward}(witnetRandomnessRequest);
 
         // Save a mapping of internal query ids to Witnet query ids
         witnetRequestIds[requestId] = _witnetQueryId;

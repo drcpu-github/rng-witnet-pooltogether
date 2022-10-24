@@ -14,6 +14,8 @@ abstract contract WitnetRequestMalleableBase
         Ownable,
         Proxiable
 {
+    using Witnet for bytes;
+
     event WitnessingParamsChanged(
         address indexed by,
         uint8 numWitnesses,
@@ -333,7 +335,7 @@ abstract contract WitnetRequestMalleableBase
             _uint8varint(0x28, _minWitnessingConsensus),
             _uint64varint(0x30, _witnessingCollateral)
         );
-        _request().hash = Witnet.hash(_request().bytecode);
+        _request().hash = _request().bytecode.hash();
         emit WitnessingParamsChanged(
             msg.sender,
             _numWitnesses,

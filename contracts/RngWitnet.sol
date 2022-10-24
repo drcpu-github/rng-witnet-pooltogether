@@ -14,6 +14,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     event RequestSet(bytes request);
     event RequesterAdded(address requester);
     event RngRequested(uint32 indexed requestId, uint256 witnetRequestId);
+    event WitnetRequestRandomnessSet(WitnetRequestRandomness witnetRequestRandomness);
     event WrbSet(WitnetRequestBoard witnetRequestBoard);
 
     /// @dev Low-level Witnet Data Request composed on construction
@@ -65,6 +66,15 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         maxFee = _maxFee;
 
         emit MaxFeeSet(_maxFee);
+    }
+
+    /// @notice Allows owner to set a new Witnet Request Randomness
+    /// @param _witnetRequestRandomness The address of the Witnet Request Randomness factory
+    function setWitnetRequestRandomness(WitnetRequestRandomness _witnetRequestRandomness) external onlyOwner {
+        witnetRandomnessRequest = WitnetRequestRandomness(address(_witnetRequestRandomness.clone()));
+        witnetRandomnessRequest.transferOwnership(msg.sender);
+
+        emit WitnetRequestRandomnessSet(_witnetRequestRandomness);
     }
 
     /// @notice Allows owner to add an address which can generate an RNG request

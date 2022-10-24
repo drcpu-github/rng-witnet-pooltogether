@@ -41,10 +41,10 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     mapping(uint32 => uint256) internal witnetRequestIds;
 
     /// @dev Public constructor
-    constructor(WitnetRequestBoard _witnetRequestBoard) UsingWitnet(_witnetRequestBoard) {
+    constructor(WitnetRequestBoard _witnetRequestBoard, WitnetRequestRandomness _witnetRequestRandomness) UsingWitnet(_witnetRequestBoard) {
         emit WrbSet(_witnetRequestBoard);
 
-        witnetRandomnessRequest = new WitnetRequestRandomness();
+        witnetRandomnessRequest = WitnetRequestRandomness(address(_witnetRequestRandomness.clone()));
         witnetRandomnessRequest.transferOwnership(msg.sender);
     }
 

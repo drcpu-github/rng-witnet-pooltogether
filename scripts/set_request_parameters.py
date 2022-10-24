@@ -16,10 +16,12 @@ def main():
     else:
         rng_witnet = RngWitnet[-1]
 
+    print(f"RngWitnet deployment: {rng_witnet}")
+
     # Print owner of Witnet randomness request instantation
     abi = json.loads(open("build/contracts/WitnetRequestRandomness.json").read())["abi"]
     witnet_randomness_request = Contract.from_abi("WitnetRequestRandomness", rng_witnet.witnetRandomnessRequest(), abi)
-    print(witnet_randomness_request.owner())
+    print(f"Owner of the Witnet Randomness Request: {witnet_randomness_request.owner()}")
 
     # Set witnessing parameters
     witnet_randomness_request.setWitnessingParameters(10 ** 10, 10 ** 8, 10 ** 6, 8, 51, {"from": my_account})

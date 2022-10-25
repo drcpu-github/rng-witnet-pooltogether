@@ -65,39 +65,24 @@ abstract contract WitnetRequestMalleableBase
         return _request().hash;
     }
 
-    /// Sets amount of nanowits that a witness solving the request will be required to collateralize in the commitment transaction.
-    function setWitnessingCollateral(uint64 _witnessingCollateral)
+    /// Specifies how much you want to pay for rewarding each of the Witnet nodes.
+    /// @param _witnessingCollateral Sets amount of nanowits that a witness solving the request will be required to collateralize.
+    /// @param _witnessingReward Amount of nanowits that every request-solving witness will be rewarded with.
+    /// @param _witnessingUnitaryFee Amount of nanowits that will be earned by Witnet miners for each each valid 
+    /// commit/reveal transaction they include in a block.
+    function setWitnessingMonetaryPolicy(uint64 _witnessingCollateral, uint64 _witnessingReward, uint64 _witnessingUnitaryFee)
         public
         virtual
         onlyOwner
     {
         WitnetRequestWitnessingParams storage _params = _request().params;
         _params.witnessingCollateral = _witnessingCollateral;
-        _malleateBytecode(
-            _params.numWitnesses,
-            _params.minWitnessingConsensus,
-            _witnessingCollateral,
-            _params.witnessingReward,
-            _params.witnessingUnitaryFee
-        );
-    }
-
-    /// Specifies how much you want to pay for rewarding each of the Witnet nodes.
-    /// @param _witnessingReward Amount of nanowits that every request-solving witness will be rewarded with.
-    /// @param _witnessingUnitaryFee Amount of nanowits that will be earned by Witnet miners for each each valid 
-    /// commit/reveal transaction they include in a block.
-    function setWitnessingFees(uint64 _witnessingReward, uint64 _witnessingUnitaryFee)
-        public
-        virtual
-        onlyOwner
-    {
-        WitnetRequestWitnessingParams storage _params = _request().params;
         _params.witnessingReward = _witnessingReward;
         _params.witnessingUnitaryFee = _witnessingUnitaryFee;
         _malleateBytecode(
             _params.numWitnesses,
             _params.minWitnessingConsensus,
-            _params.witnessingCollateral,
+            _witnessingCollateral,
             _witnessingReward,
             _witnessingUnitaryFee
         );

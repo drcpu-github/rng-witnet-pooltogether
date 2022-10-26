@@ -35,12 +35,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @dev A list of bools to check whether the random number has been fetched
     mapping(uint32 => bool) internal randomNumberFetched;
 
-    /// @dev A list of bools to check whether the random number generation encountered an error
-    mapping(uint32 => bool) internal randomNumberErrored;
-
-    /// @dev A list of blocks to be locked at based on past requests mapped by request id
-    mapping(uint32 => uint32) internal requestLockBlock;
-
     /// @dev A mapping from internal request ids to Witnet Request ids
     mapping(uint32 => uint256) internal witnetRequestIds;
 
@@ -114,8 +108,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
 
         requestId = _requestRandomness();
 
-        requestLockBlock[requestId] = lockBlock;
-
         emit RandomNumberRequested(requestId, msg.sender);
     }
 
@@ -185,7 +177,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
             randomNumberFetched[requestId] = true;
             emit RandomNumberCompleted(requestId, randomness);
         } else {
-            randomNumberErrored[requestId] = true;
             emit RandomNumberFailed(requestId);
         }
     }

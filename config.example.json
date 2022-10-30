@@ -1,6 +1,6 @@
 {
-    "max_fee": "",
     "goerli": {
+        "max_fee": "",
         "provider": "",
         "prize_strategy_addresses": [
             ""

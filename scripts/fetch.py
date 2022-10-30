@@ -12,29 +12,26 @@ from util.helper_functions import setup_web3_provider
 
 # This script is meant to check for and fetch outstanding random numbers.
 
-def fetch_goerli():
-    fetch("goerli")
-
 def fetch(network):
     load_dotenv()
-    
-    script_config = json.load(open("config.json"))[network]
 
-    w3_provider = setup_web3_provider(network, script_config["provider"])
+    network = get_network()
 
-    # Use the account defined in .env
-    accounts.add(config["wallets"]["from_key"])
-    my_account = accounts[0]
+    script_config = json.load(open("config.json"))
+    assert network in script_config, "Network configuration not found"
+    network_config = script_config[network]
+
+    w3_provider = setup_web3_provider(network, network_config["provider"])
 
     # Grab an RngWitnet deployment
-    assert script_config["rng_witnet_address"] != "", "Cannot fetch events without an RngWitnet contract address"
+    assert network_config["rng_witnet_address"] != "", "An RngWitnet contract address is required"
     abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
-    rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
+    rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
     # Get events for which random numbers failed
-    first_block_number = w3_provider.eth.get_transaction(script_config["rng_witnet_deploy_transaction"])["blockNumber"]
+    first_block_number = w3_provider.eth.get_transaction(network_config["rng_witnet_deploy_transaction"])["blockNumber"]
     last_block_number = w3_provider.eth.blockNumber
-    rng_witnet_web3 = w3_provider.eth.contract(address=Web3.toChecksumAddress(script_config["rng_witnet_address"]), abi=abi)
+    rng_witnet_web3 = w3_provider.eth.contract(address=Web3.toChecksumAddress(network_config["rng_witnet_address"]), abi=abi)
 
     random_numbers_failed = get_events_alchemy(rng_witnet_web3.events.RandomNumberFailed, first_block_number, last_block_number)
     failed_random_numbers = set([rng_failed["args"]["requestId"] for rng_failed in random_numbers_failed])
@@ -53,6 +50,7 @@ def fetch(network):
 
     print(f"Random number requests to fetch: {requests_to_fetch}")
 
+    account = get_account(0)
     for request_id in requests_to_fetch:
         # Wait while the RNG request is being executed
         while True:

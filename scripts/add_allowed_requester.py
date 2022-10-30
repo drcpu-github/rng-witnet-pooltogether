@@ -2,22 +2,21 @@ import json
 
 from brownie import accounts, config, Contract, RngWitnet
 
-def add_requesters_goerli():
-    add_requesters("goerli")
+from util.network_functions import get_account
+from util.network_functions import get_network
 
-def add_requesters(network):
+def add_requesters():
+    network = get_network()
+
     script_config = json.load(open("config.json"))
-
-    # Use the account defined in .env
-    accounts.add(config["wallets"]["from_key"])
-    my_account = accounts[0]
+    assert network in script_config, "Network configuration not found"
+    network_config = script_config[network]
 
     # Grab an RngWitnet deployment
-    if script_config["rng_witnet_address"] != "":
-        abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
-        rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
-    else:
-        rng_witnet = RngWitnet[-1]
+    assert network_config["rng_witnet_address"] != "", "An RngWitnet contract address is required"
+    abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
+    rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
 
-    for address in script_config[network]["prize_strategy_addresses"]:
-        rng_witnet.addAllowedRequester(address, {"from": my_account})
+    account = get_account(0)
+    for address in script_config["prize_strategy_addresses"]:
+        rng_witnet.addAllowedRequester(address, {"from": account})

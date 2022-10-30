@@ -2,19 +2,20 @@ import json
 
 from brownie import accounts, config, Contract, RngWitnet
 
-def main():
-    script_config = json.load(open("config.json"))
+from util.network_functions import get_account
+from util.network_functions import get_network
 
-    # Use the account defined in .env
-    accounts.add(config["wallets"]["from_key"])
-    my_account = accounts[0]
+def main():
+    network = get_network()
+
+    script_config = json.load(open("config.json"))
+    assert network in script_config, "Network configuration not found"
+    network_config = script_config[network]
 
     # Grab an RngWitnet deployment
-    if script_config["rng_witnet_address"] != "":
-        abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
-        rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
-    else:
-        rng_witnet = RngWitnet[-1]
+    assert network_config["rng_witnet_address"] != "", "An RngWitnet contract address is required"
+    abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
+    rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
     print(f"RngWitnet deployment: {rng_witnet}")
 
@@ -24,4 +25,5 @@ def main():
     print(f"Owner of the Witnet Randomness Request: {witnet_randomness_request.owner()}")
 
     # Set witnessing parameters
-    witnet_randomness_request.setWitnessingParameters(10 ** 10, 10 ** 8, 10 ** 6, 8, 51, {"from": my_account})
+    account = get_account(0)
+    witnet_randomness_request.setWitnessingParameters(10 ** 10, 10 ** 8, 10 ** 6, 8, 51, {"from": account})

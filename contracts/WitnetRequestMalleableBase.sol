@@ -25,6 +25,11 @@ abstract contract WitnetRequestMalleableBase
         uint64 witnessingUnitaryFee
     );
 
+    error noWitnessingReward();
+    error invalidNumWitnesses(uint8 _numWitnesses);
+    error invalidWitnessingConsensus(uint8 _minWitnessingConsensus);
+    error invalidWitnessingCollateral(uint64 _witnessingCollateral);
+
     struct WitnetRequestMalleableBaseContext {
         /// Contract owner address.
         address owner;
@@ -274,7 +279,7 @@ abstract contract WitnetRequestMalleableBase
         _params.witnessingCollateral = 10 ** 9;      // 1 WIT
         _params.witnessingReward = 5 * 10 ** 5;      // 0.5 milliWITs
         _params.witnessingUnitaryFee = 25 * 10 ** 4; // 0.25 milliWITs
-        
+
         _malleateBytecode(
             _params.numWitnesses,
             _params.minWitnessingConsensus,
@@ -295,22 +300,14 @@ abstract contract WitnetRequestMalleableBase
         internal
         virtual
     {
-        require(
-            _witnessingReward > 0,
-            "WitnetRequestMalleableBase: no reward"
-        );
-        require(
-            _numWitnesses >= 1 && _numWitnesses <= 127,
-            "WitnetRequestMalleableBase: number of witnesses out of range"
-        );
-        require(
-            _minWitnessingConsensus >= 51 && _minWitnessingConsensus <= 99,
-            "WitnetRequestMalleableBase: witnessing consensus out of range"
-        );
-        require(
-            _witnessingCollateral >= 10 ** 9,
-            "WitnetRequestMalleableBase: witnessing collateral below 1 WIT"
-        );
+        if (_witnessingReward == 0)
+            revert noWitnessingReward();
+        if (_numWitnesses > 125 || _numWitnesses == 0)
+            revert invalidNumWitnesses(_numWitnesses);
+        if (_minWitnessingConsensus < 51 || _minWitnessingConsensus > 99)
+            revert invalidWitnessingConsensus(_minWitnessingConsensus);
+        if (_witnessingCollateral < 10 ** 9)
+            revert invalidWitnessingCollateral(_witnessingCollateral);
 
         _request().bytecode = abi.encodePacked(
             _request().template,
@@ -359,15 +356,20 @@ abstract contract WitnetRequestMalleableBase
         uint64 numBytes = 2;
         while (tmp > 0x7F) {
             tmp = tmp >> 7;
-            numBytes += 1;
+            unchecked {
+                numBytes += 1;
+            }
         }
         bytes memory buf = new bytes(numBytes);
         tmp = n;
         buf[0] = t;
-        for (uint64 i = 1; i < numBytes; i++) {
+        for (uint64 i = 1; i < numBytes;) {
             // Set the first bit in the byte for each group of 7 bits
             buf[i] = bytes1(0x80 | uint8(tmp & 0x7F));
             tmp = tmp >> 7;
+            unchecked {
+                i++;
+            }
         }
         // Unset the first bit of the last byte
         buf[numBytes - 1] &= 0x7F;

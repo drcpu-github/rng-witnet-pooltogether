@@ -8,14 +8,18 @@ import "./RngInterface.sol";
 import "./WitnetRequestRandomness.sol";
 
 contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
-    event MaxFeeSet(uint256 maxFee);
-    event RandomNumberFailed(uint32 requestId);
-    event Received(address, uint);
-    event RequestSet(bytes request);
-    event RequesterAdded(address requester);
-    event RngRequested(uint32 indexed requestId, uint256 witnetRequestId);
-    event WitnetRequestRandomnessSet(WitnetRequestRandomness witnetRequestRandomness);
-    event WrbSet(WitnetRequestBoard witnetRequestBoard);
+    event MaxFeeSet(uint256 indexed maxFee);
+    event RandomNumberFailed(uint32 indexed requestId);
+    event Received(address indexed sender, uint value);
+    event RequesterAdded(address indexed requester);
+    event RngRequested(uint32 indexed requestId, uint256 indexed witnetRequestId);
+    event WitnetRequestRandomnessSet(WitnetRequestRandomness indexed witnetRequestRandomness);
+    event WrbSet(WitnetRequestBoard indexed witnetRequestBoard);
+
+    error disallowedRequester(address _requester);
+    error maxFeeTooLow(uint256 _maxFee, uint256 _fee);
+    error balanceTooLow(uint256 _balance, uint256 _fee);
+    error randomnessNotAvailable(uint256 _queryId);
 
     /// @dev Low-level Witnet Data Request composed on construction
     WitnetRequestRandomness public witnetRandomnessRequest;
@@ -102,7 +106,8 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @return lockBlock The block number at which the RNG service will start generating time-delayed randomness. The calling contract
     /// should "lock" all activity until the result is available via the `requestId`
     function requestRandomNumber() external override returns (uint32 requestId, uint32 lockBlock) {
-        require(allowedRequester[msg.sender], "RngWitnet/requester-not-allowed");
+        if (allowedRequester[msg.sender] == false)
+            revert disallowedRequester(msg.sender);
 
         lockBlock = uint32(block.number);
 
@@ -139,8 +144,11 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @dev The result of the request is returned in the function `fulfillRandomness`
     function _requestRandomness() internal returns (uint32 requestId) {
         uint256 _witnetReward = _witnetEstimateReward();
-        require(_witnetReward < maxFee, "RngWitnet/max-fee-too-low");
-        require(address(this).balance >= _witnetReward, "RngWitnet/balance-too-low");
+
+        if (_witnetReward >= maxFee)
+            revert maxFeeTooLow(maxFee, _witnetReward);
+        if (address(this).balance < _witnetReward)
+            revert balanceTooLow(address(this).balance, _witnetReward);
 
         // Get next request ID
         requestId = _getNextRequestId();
@@ -166,7 +174,8 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         uint _queryId = witnetRequestIds[requestId];
 
         // Check whether the randomness request has already been resolved
-        require(_witnetCheckResultAvailability(_queryId), "RngWitnet/randomness-not-available");
+        if (!_witnetCheckResultAvailability(_queryId))
+            revert randomnessNotAvailable(_queryId);
 
         // Low-level interaction with the WitnetRequestBoard as to deserialize the result,
         // and check whether the randomness request failed or succeeded:

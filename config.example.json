@@ -1,10 +1,12 @@
 {
-    "rng_witnet_address": "",
     "max_fee": "",
     "goerli": {
+        "provider": "",
         "prize_strategy_addresses": [
             ""
         ],
+        "rng_witnet_address": "",
+        "rng_witnet_deploy_transaction": "",
         "witnet_request_board_address": "",
         "witnet_request_randomness_address": ""
     }

@@ -3,21 +3,43 @@ import time
 
 from brownie import accounts, config, Contract, RngWitnet
 
-# This script is meant to check whether there are any outstanding and fetchable random numbers.
+from dotenv import load_dotenv
 
-def main():
-    script_config = json.load(open("config.json"))
+from web3 import Web3
+
+from util.helper_functions import get_events_alchemy
+from util.helper_functions import setup_web3_provider
+
+# This script is meant to check for and fetch outstanding random numbers.
+
+def fetch_goerli():
+    fetch("goerli")
+
+def fetch(network):
+    load_dotenv()
+    
+    script_config = json.load(open("config.json"))[network]
+
+    w3_provider = setup_web3_provider(network, script_config["provider"])
 
     # Use the account defined in .env
     accounts.add(config["wallets"]["from_key"])
     my_account = accounts[0]
 
     # Grab an RngWitnet deployment
-    if script_config["rng_witnet_address"] != "":
-        abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
-        rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
-    else:
-        rng_witnet = RngWitnet[-1]
+    assert script_config["rng_witnet_address"] != "", "Cannot fetch events without an RngWitnet contract address"
+    abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
+    rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
+
+    # Get events for which random numbers failed
+    first_block_number = w3_provider.eth.get_transaction(script_config["rng_witnet_deploy_transaction"])["blockNumber"]
+    last_block_number = w3_provider.eth.blockNumber
+    rng_witnet_web3 = w3_provider.eth.contract(address=Web3.toChecksumAddress(script_config["rng_witnet_address"]), abi=abi)
+
+    random_numbers_failed = get_events_alchemy(rng_witnet_web3.events.RandomNumberFailed, first_block_number, last_block_number)
+    failed_random_numbers = set([rng_failed["args"]["requestId"] for rng_failed in random_numbers_failed])
+
+    print(f"Random number requests which failed: {failed_random_numbers}")
 
     # Get the total number of requests which have been made
     request_count = rng_witnet.requestCount()
@@ -26,8 +48,10 @@ def main():
     requests_to_fetch = []
     for request_id in range(1, request_count + 1):
         is_complete = rng_witnet.isRequestComplete(request_id)
-        if not is_complete:
+        if not is_complete and request_id not in failed_random_numbers:
             requests_to_fetch.append(request_id)
+
+    print(f"Random number requests to fetch: {requests_to_fetch}")
 
     for request_id in requests_to_fetch:
         # Wait while the RNG request is being executed

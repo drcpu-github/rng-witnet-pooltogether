@@ -5,7 +5,7 @@ from brownie import accounts, config, Contract, RngWitnet, Wei
 from util.network_functions import get_account
 from util.network_functions import get_network
 
-def main(network):
+def main():
     network = get_network()
 
     script_config = json.load(open("config.json"))
@@ -17,5 +17,12 @@ def main(network):
     abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
     rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
-    account = get_account(0)
-    rng_witnet.setMaxFee(Wei(network_config["max_data_request_fee"]), {"from": my_account})
+    account = get_account()
+    rng_witnet.setMaxFee(
+        Wei(network_config["max_data_request_fee"]),
+        {
+            "from": account,
+            "priority_fee": network_config["priority_fee"],
+            "max_fee": network_config["max_fee"],
+        }
+    )

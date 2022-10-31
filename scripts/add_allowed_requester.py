@@ -5,7 +5,7 @@ from brownie import accounts, config, Contract, RngWitnet
 from util.network_functions import get_account
 from util.network_functions import get_network
 
-def add_requesters():
+def main():
     network = get_network()
 
     script_config = json.load(open("config.json"))
@@ -15,8 +15,15 @@ def add_requesters():
     # Grab an RngWitnet deployment
     assert network_config["rng_witnet_address"] != "", "An RngWitnet contract address is required"
     abi = json.loads(open("build/contracts/RngWitnet.json").read())["abi"]
-    rng_witnet = Contract.from_abi("RngWitnet", script_config["rng_witnet_address"], abi)
+    rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
-    account = get_account(0)
-    for address in script_config["prize_strategy_addresses"]:
-        rng_witnet.addAllowedRequester(address, {"from": account})
+    account = get_account()
+    for address in network_config["prize_strategy_addresses"]:
+        rng_witnet.addAllowedRequester(
+            address,
+            {
+                "from": account,
+                "priority_fee": network_config["priority_fee"],
+                "max_fee": network_config["max_fee"],
+            }
+        )

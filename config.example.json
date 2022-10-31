@@ -1,5 +1,7 @@
 {
     "goerli": {
+        "priority_fee": "",
+        "max_fee": "",
         "max_data_request_fee": "",
         "provider": "",
         "prize_strategy_addresses": [

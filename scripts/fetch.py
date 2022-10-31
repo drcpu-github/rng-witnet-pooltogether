@@ -50,7 +50,7 @@ def fetch(network):
 
     print(f"Random number requests to fetch: {requests_to_fetch}")
 
-    account = get_account(0)
+    account = get_account()
     for request_id in requests_to_fetch:
         # Wait while the RNG request is being executed
         while True:
@@ -61,7 +61,14 @@ def fetch(network):
             time.sleep(30)
 
         # Fetch the randomness into the contract
-        txn = rng_witnet.fetchRandomness(request_id, {"from": my_account})
+        txn = rng_witnet.fetchRandomness(
+            request_id,
+            {
+                "from": account,
+                "priority_fee": network_config["priority_fee"],
+                "max_fee": network_config["max_fee"],
+            }
+        )
         if "RandomNumberFailed" in txn.events:
             request_id = txn.events["RandomNumberFailed"][0][0]["requestId"]
             print(f"Fetching the random number for request {request_id} failed")

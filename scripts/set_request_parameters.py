@@ -25,5 +25,16 @@ def main():
     print(f"Owner of the Witnet Randomness Request: {witnet_randomness_request.owner()}")
 
     # Set witnessing parameters
-    account = get_account(0)
-    witnet_randomness_request.setWitnessingParameters(10 ** 10, 10 ** 8, 10 ** 6, 8, 51, {"from": account})
+    account = get_account()
+    witnet_randomness_request.setWitnessingParameters(
+        10 ** 10,   # collateral
+        10 ** 8,    # witness reward
+        10 ** 6,    # commit and reveal inclusion fees
+        8,          # witnesses
+        51,         # consensus percentage
+        {
+            "from": account,
+            "priority_fee": network_config["priority_fee"],
+            "max_fee": network_config["max_fee"],
+        }
+    )

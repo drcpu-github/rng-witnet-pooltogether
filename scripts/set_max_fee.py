@@ -18,4 +18,4 @@ def main(network):
     rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
     account = get_account(0)
-    rng_witnet.setMaxFee(Wei(network_config["max_fee"]), {"from": my_account})
+    rng_witnet.setMaxFee(Wei(network_config["max_data_request_fee"]), {"from": my_account})

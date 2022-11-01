@@ -12,6 +12,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     event RandomNumberFailed(uint32 indexed requestId);
     event Received(address indexed sender, uint value);
     event RequesterAdded(address indexed requester);
+    event RequesterRemoved(address indexed requester);
     event RngRequested(uint32 indexed requestId, uint256 indexed witnetRequestId);
     event WitnetRequestRandomnessSet(WitnetRequestRandomness indexed witnetRequestRandomness);
     event WrbSet(WitnetRequestBoard indexed witnetRequestBoard);
@@ -84,6 +85,14 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         allowedRequester[_requester] = true;
 
         emit RequesterAdded(_requester);
+    }
+
+    /// @notice Allows owner to remove an address which can generate an RNG request
+    /// @param _requester The address that can generate an RNG request
+    function removeAllowedRequester(address _requester) external onlyOwner {
+        delete allowedRequester[_requester];
+
+        emit RequesterRemoved(_requester);
     }
 
     /// @notice Gets the last request id used by the RNG service

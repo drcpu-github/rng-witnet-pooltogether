@@ -168,11 +168,6 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         // Save a mapping of internal query ids to Witnet query ids
         witnetRequestIds[requestId] = _witnetQueryId;
 
-        // Transfer back unused funds
-        if (_witnetReward < maxFee) {
-            payable(address(this)).transfer(maxFee - _witnetReward);
-        }
-
         emit RngRequested(requestId, _witnetQueryId);
     }
 

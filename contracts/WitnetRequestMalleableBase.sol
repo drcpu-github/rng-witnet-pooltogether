@@ -25,6 +25,7 @@ abstract contract WitnetRequestMalleableBase
         uint64 witnessingUnitaryFee
     );
 
+    error requestAlreadyInitialized();
     error noWitnessingReward();
     error invalidNumWitnesses(uint8 _numWitnesses);
     error invalidWitnessingConsensus(uint8 _minWitnessingConsensus);
@@ -219,7 +220,8 @@ abstract contract WitnetRequestMalleableBase
         public
         virtual override
     {
-        require(_request().template.length == 0, "WitnetRequestMalleableBase: already initialized");
+        if (_request().template.length > 0)
+            revert requestAlreadyInitialized();
         _initialize(_template);
         _transferOwnership(_msgSender());
     }

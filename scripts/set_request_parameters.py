@@ -26,15 +26,17 @@ def main():
 
     # Set witnessing parameters
     account = get_account()
+
+    transaction_parameters = {"from": account}
+    if network_config["priority_fee"] != "" and network_config["max_fee"] != "":
+        transaction_parameters["priority_fee"] = network_config["priority_fee"]
+        transaction_parameters["max_fee"] = network_config["max_fee"]
+
     witnet_randomness_request.setWitnessingParameters(
         10 ** 10,   # collateral
         10 ** 8,    # witness reward
         10 ** 6,    # commit and reveal inclusion fees
         8,          # witnesses
         51,         # consensus percentage
-        {
-            "from": account,
-            "priority_fee": network_config["priority_fee"],
-            "max_fee": network_config["max_fee"],
-        }
+        transaction_parameters,
     )

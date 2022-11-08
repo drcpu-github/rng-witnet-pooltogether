@@ -18,11 +18,13 @@ def main():
     rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
     account = get_account()
+
+    transaction_parameters = {"from": account}
+    if network_config["priority_fee"] != "" and network_config["max_fee"] != "":
+        transaction_parameters["priority_fee"] = network_config["priority_fee"]
+        transaction_parameters["max_fee"] = network_config["max_fee"]
+
     rng_witnet.setMaxFee(
         Wei(network_config["max_data_request_fee"]),
-        {
-            "from": account,
-            "priority_fee": network_config["priority_fee"],
-            "max_fee": network_config["max_fee"],
-        }
+        transaction_parameters,
     )

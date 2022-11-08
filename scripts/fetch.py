@@ -10,9 +10,12 @@ from web3 import Web3
 from util.helper_functions import get_events_alchemy
 from util.helper_functions import setup_web3_provider
 
+from util.network_functions import get_account
+from util.network_functions import get_network
+
 # This script is meant to check for and fetch outstanding random numbers.
 
-def fetch(network):
+def main():
     load_dotenv()
 
     network = get_network()
@@ -36,7 +39,7 @@ def fetch(network):
     random_numbers_failed = get_events_alchemy(rng_witnet_web3.events.RandomNumberFailed, first_block_number, last_block_number)
     failed_random_numbers = set([rng_failed["args"]["requestId"] for rng_failed in random_numbers_failed])
 
-    print(f"Random number requests which failed: {failed_random_numbers}")
+    print(f"Random number requests which failed: {list(failed_random_numbers)}")
 
     # Get the total number of requests which have been made
     request_count = rng_witnet.requestCount()
@@ -51,6 +54,12 @@ def fetch(network):
     print(f"Random number requests to fetch: {requests_to_fetch}")
 
     account = get_account()
+
+    transaction_parameters = {"from": account}
+    if network_config["priority_fee"] != "" and network_config["max_fee"] != "":
+        transaction_parameters["priority_fee"] = network_config["priority_fee"]
+        transaction_parameters["max_fee"] = network_config["max_fee"]
+
     for request_id in requests_to_fetch:
         # Wait while the RNG request is being executed
         while True:
@@ -63,11 +72,7 @@ def fetch(network):
         # Fetch the randomness into the contract
         txn = rng_witnet.fetchRandomness(
             request_id,
-            {
-                "from": account,
-                "priority_fee": network_config["priority_fee"],
-                "max_fee": network_config["max_fee"],
-            }
+            transaction_parameters,
         )
         if "RandomNumberFailed" in txn.events:
             request_id = txn.events["RandomNumberFailed"][0][0]["requestId"]

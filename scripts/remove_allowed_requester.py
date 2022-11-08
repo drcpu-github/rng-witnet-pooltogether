@@ -18,12 +18,14 @@ def main():
     rng_witnet = Contract.from_abi("RngWitnet", network_config["rng_witnet_address"], abi)
 
     account = get_account()
+
+    transaction_parameters = {"from": account}
+    if network_config["priority_fee"] != "" and network_config["max_fee"] != "":
+        transaction_parameters["priority_fee"] = network_config["priority_fee"]
+        transaction_parameters["max_fee"] = network_config["max_fee"]
+
     for address in network_config["prize_strategy_addresses"]:
         rng_witnet.removeAllowedRequester(
             address,
-            {
-                "from": account,
-                "priority_fee": network_config["priority_fee"],
-                "max_fee": network_config["max_fee"],
-            }
+            transaction_parameters,
         )

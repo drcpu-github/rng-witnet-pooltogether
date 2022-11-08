@@ -3,12 +3,13 @@ import time
 
 from brownie import accounts, config, Contract, RngWitnet
 
+from util.network_functions import get_account
+from util.network_functions import get_network
+
 # This script serves as an example for the steps required to fetch a random number.
 # It only works if you add yourself as an allowed requester to the contract.
-def request_and_fetch_rng_goerli():
-    request_and_fetch_rng("goerli")
 
-def request_and_fetch_rng(network):
+def main():
     network = get_network()
 
     script_config = json.load(open("config.json"))
@@ -22,13 +23,15 @@ def request_and_fetch_rng(network):
 
     # Request random number
     account = get_account()
+
+    transaction_parameters = {"from": account}
+    if network_config["priority_fee"] != "" and network_config["max_fee"] != "":
+        transaction_parameters["priority_fee"] = network_config["priority_fee"]
+        transaction_parameters["max_fee"] = network_config["max_fee"]
+    transaction_parameters["gas_limit"] = 300000
+
     txn = rng_witnet.requestRandomNumber(
-        {
-            "from": account,
-            "gas_limit": 300000,
-            "priority_fee": network_config["priority_fee"],
-            "max_fee": network_config["max_fee"],
-        }
+        transaction_parameters,
     )
     contract_request_id = txn.events["RngRequested"]["requestId"]
     witnet_request_id = txn.events["RngRequested"]["witnetRequestId"]
@@ -43,11 +46,8 @@ def request_and_fetch_rng(network):
         time.sleep(30)
 
     # Fetch the randomness into the contract
+    del transaction_parameters["gas_limit"]
     rng_witnet.fetchRandomness(
         contract_request_id,
-        {
-            "from": account,
-            "priority_fee": network_config["priority_fee"],
-            "max_fee": network_config["max_fee"],
-        }
+        transaction_parameters,
     )

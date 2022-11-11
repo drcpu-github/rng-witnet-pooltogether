@@ -49,6 +49,8 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
 
         witnetRandomnessRequest = WitnetRequestRandomness(address(_witnetRequestRandomness.clone()));
         witnetRandomnessRequest.transferOwnership(msg.sender);
+
+        emit WitnetRequestRandomnessSet(_witnetRequestRandomness);
     }
 
     /// @notice Allows this contract to receive Ether

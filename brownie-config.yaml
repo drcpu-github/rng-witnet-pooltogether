@@ -2,7 +2,9 @@ dependencies:
     - OpenZeppelin/openzeppelin-contracts@4.3.2
     - witnet/witnet-solidity-bridge@0.5.7
 compiler:
+    evm_version: london
     solc:
+        version: 0.8.7
         remappings:
             - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.2'
             - '@witnet/witnet-solidity-bridge=witnet/witnet-solidity-bridge@0.5.7'

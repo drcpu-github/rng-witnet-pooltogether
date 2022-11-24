@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity 0.8.6;
+pragma solidity >=0.7.0 <0.9.0;
 
 import "@witnet/witnet-solidity-bridge/contracts/UsingWitnet.sol";
 
@@ -25,7 +25,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
     /// @dev Low-level Witnet Data Request composed on construction
     WitnetRequestRandomness public witnetRandomnessRequest;
 
-    /// @dev The maximum request fee for the Witnet RNG
+    /// @dev The maximum allowed request fee for the Witnet RNG to prevent accidentally draining the contract
     uint256 public maxFee;
 
     /// @dev A counter for the number of requests made used for request ids
@@ -103,15 +103,22 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
         return requestCount;
     }
 
-    /// @notice Gets the maximum fee for making a request against an RNG service
+    /// @notice Gets the current fee for making a request against an RNG service based on the latest blocks basefee
     /// @return feeToken Compatibility return value: no fee token is required but payed in Ether
-    /// @return requestFee The maximum fee required for making a request
+    /// @return requestFee The maximum fee which can be used to launch an RNG request
     function getRequestFee() external view override returns (address feeToken, uint256 requestFee) {
-        return (address(0), maxFee);
+        return (address(0), _witnetEstimateReward(block.basefee));
     }
 
-    /// @notice Sends a request for a random number to the 3rd-party service. This request spends the contracts balance and only
-    /// allowed prize strategy contracts (such as MultipleWinners deployments) should be able to call it.
+    /// @notice Gets the fee to launch a Witnet RNG request given a specific gas price
+    /// @param _gasPrice The gas price in Wei for which to calculate the reward
+    /// @return requestFee The fee required for making a request given a gas price
+    function getRequestFee(uint256 _gasPrice) external view returns (uint256 requestFee) {
+        return _witnetEstimateReward(_gasPrice);
+    }
+
+    /// @notice Sends a request for a random number to a 3rd-party service. This request spends the contract's balance and only
+    /// allowed prize strategy contracts (such as deployments of the PoolTogether MultipleWinners contract) are able to call it
     /// @dev Some services will complete the request immediately, others may have a time-delay
     /// @return requestId The ID of the request used to get the results of the RNG service
     /// @return lockBlock The block number at which the RNG service will start generating time-delayed randomness. The calling contract
@@ -153,6 +160,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
 
     /// @dev Requests a new random number from the Chainlink VRF
     /// @dev The result of the request is returned in the function `fulfillRandomness`
+    /// @return requestId The internal request id
     function _requestRandomness() internal returns (uint32 requestId) {
         uint256 _witnetReward = _witnetEstimateReward();
 
@@ -175,6 +183,7 @@ contract RngWitnet is RNGInterface, UsingWitnet, Ownable {
 
     /// @notice Function to fetch randomness once it is ready
     /// @dev Check if the result of the randomness function is ready and return the value if it is
+    /// @param requestId The ID of the request of which to fetch the random number
     function fetchRandomness(uint32 requestId) external
     {
         uint _queryId = witnetRequestIds[requestId];

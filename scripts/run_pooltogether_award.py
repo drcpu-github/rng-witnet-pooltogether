@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 
 from brownie import config, Contract, RngWitnet, Wei
@@ -30,10 +31,10 @@ def start_award(network_config, transaction_parameters):
         if can_start:
             prize_strategy.startAward(transaction_parameters)
 
-            print(f"Started award for prize strategy at {prize_strategy_address}")
+            logging.info(f"Started award for prize strategy at {prize_strategy_address}\n")
             awards_started.add(prize_strategy_address)
         else:
-            print(f"Failed to start award for prize strategy at {prize_strategy_address}")
+            logging.warning(f"Prize strategy {prize_strategy_address} is not ready for awarding\n")
 
     # Return prize strategies for which an award was started
     return awards_started
@@ -49,12 +50,10 @@ def fetch_random_numbers(network_config, w3_provider, transaction_parameters):
     last_block_number = w3_provider.eth.blockNumber
     rng_witnet_web3 = w3_provider.eth.contract(address=Web3.toChecksumAddress(network_config["rng_witnet_address"]), abi=rng_witnet_abi)
 
-    print("")
-
     random_numbers_failed = get_events_alchemy(rng_witnet_web3.events.RandomNumberFailed, first_block_number, last_block_number)
     failed_random_numbers = set([rng_failed["args"]["requestId"] for rng_failed in random_numbers_failed])
 
-    print(f"Random number requests which failed: {list(failed_random_numbers)}")
+    logging.info(f"Random number requests which failed: {list(failed_random_numbers)}\n")
 
     # Get the total number of requests which have been made
     request_count = rng_witnet.requestCount()
@@ -66,13 +65,13 @@ def fetch_random_numbers(network_config, w3_provider, transaction_parameters):
         if not is_complete and request_id not in failed_random_numbers:
             requests_to_fetch.append(request_id)
 
-    print(f"\nRandom number requests to fetch: {requests_to_fetch}\n")
+    logging.info(f"Random number requests to fetch: {requests_to_fetch}\n")
 
     for request_id in requests_to_fetch:
         # Wait while the RNG request is being executed
         while True:
             is_request_fetchable = rng_witnet.isRngFetchable(request_id)
-            print(f"Is RNG request {request_id} fetchable: {is_request_fetchable}")
+            logging.info(f"Is RNG request {request_id} fetchable: {is_request_fetchable}")
             if is_request_fetchable:
                 break
             time.sleep(30)
@@ -84,11 +83,11 @@ def fetch_random_numbers(network_config, w3_provider, transaction_parameters):
         )
         if "RandomNumberFailed" in txn.events:
             request_id = txn.events["RandomNumberFailed"][0][0]["requestId"]
-            print(f"Fetching the random number for request {request_id} failed\n")
+            logging.error(f"Fetching the random number for request {request_id} failed\n")
         else:
             request_id = txn.events["RandomNumberCompleted"][0][0]["requestId"]
             random_number = txn.events["RandomNumberCompleted"][0][0]["randomNumber"]
-            print(f"Fetching the random number for request {request_id} succeeded: {random_number:x}\n")
+            logging.info(f"Fetching the random number for request {request_id} succeeded: {random_number:x}\n")
 
 def complete_award(awards_started, transaction_parameters):
     prize_strategy_abi = json.loads(open("abis/multiple_winners_abi.json").read())
@@ -101,11 +100,27 @@ def complete_award(awards_started, transaction_parameters):
 
         if can_complete:
             prize_strategy.completeAward(transaction_parameters)
-            print(f"Completed award for prize strategy at {prize_strategy_address}")
+            logging.info(f"Completed award for prize strategy at {prize_strategy_address}\n")
         else:
-            print(f"Cannot complete award for prize strategy at {prize_strategy_address}")
+            logging.warning(f"Cannot complete award for prize strategy at {prize_strategy_address}\n")
 
 def main():
+    print("")
+
+    # Configure logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # Add header formatting of the log message
+    logging.Formatter.converter = time.gmtime
+    formatter = logging.Formatter("[%(levelname)-8s] [%(asctime)s] %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+
+    # Add console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.INFO)
+    logger.addHandler(console_handler)
+
     load_dotenv()
 
     network = get_network()
@@ -119,7 +134,7 @@ def main():
     # Check if the current gas price does not exceed the configured maximum price
     current_gas_price = w3_provider.eth.gas_price
     if current_gas_price > Wei(network_config["max_gas_price"]):
-        print(f"Refusing to start award since the gas price is {current_gas_price / 1E9:.2f} gwei")
+        logging.warning(f"Refusing to start award since the gas price is {current_gas_price / 1E9:.3f} gwei\n")
         return
 
     # Set transaction parameters
@@ -129,12 +144,15 @@ def main():
         transaction_parameters["priority_fee"] = network_config["priority_fee"]
         transaction_parameters["max_fee"] = network_config["max_fee"]
 
+    logging.info("Starting awards\n")
     # Hard code gas limit since the web3 estimation seems to be off
     transaction_parameters["gas_limit"] = 400000
     awards_started = start_award(network_config, transaction_parameters)
 
+    logging.info("Fetch random numbers\n")
     # Remove hard coded gas limit
     del transaction_parameters["gas_limit"]
     fetch_random_numbers(network_config, w3_provider, transaction_parameters)
 
+    logging.info("Completing awards\n")
     complete_award(awards_started, transaction_parameters)

@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 
@@ -7,30 +8,30 @@ from web3.middleware import geth_poa_middleware
 
 # This function is tailored to fetch iterative events from Alchemy and won't work with another node API provider such as Infura
 def get_events_alchemy(event, from_block, to_block):
-    print(f"Fetching {event.event_name} events from block {from_block} to block {to_block}")
+    logging.info(f"Fetching {event.event_name} events from block {from_block} to block {to_block}")
     event_filter = event.createFilter(fromBlock=from_block, toBlock=to_block)
     try:
         return event_filter.get_all_entries()
     except ValueError as err:
         if "message" in err.args[0] and "Log response size exceeded." in err.args[0]["message"]:
-            print(f"Could not fetch all {event.event_name} events at once, falling back to iterative event fetching")
+            logging.warning(f"Could not fetch all {event.event_name} events at once, falling back to iterative event fetching")
             return _get_events_iteratively_alchemy(event, from_block, to_block)
         else:
             raise
 
 # This function is tailored to fetch iterative events from Alchemy and won't work with another node API provider
 def _get_events_iteratively_alchemy(event, from_block, to_block, blocks_per_call=100000):
-    print(f"Fetching {event.event_name} events iteratively from {from_block} to {to_block} limited to {blocks_per_call} blocks")
+    logging.info(f"Fetching {event.event_name} events iteratively from {from_block} to {to_block} limited to {blocks_per_call} blocks")
     events = []
     for block in range(from_block, to_block, blocks_per_call):
         fetch_until = min(to_block, block + blocks_per_call)
-        print(f"Fetching {event.event_name} events for block {block} to {fetch_until} (fetching until block {to_block})")
+        logging.info(f"Fetching {event.event_name} events for block {block} to {fetch_until} (fetching until block {to_block})")
         event_filter = event.createFilter(fromBlock=block, toBlock=fetch_until)
         try:
             events.extend(event_filter.get_all_entries())
         except ValueError as err:
             if "message" in err.args[0] and "Log response size exceeded." in err.args[0]["message"]:
-                print(f"Could not fetch all events at once, falling back to iterative event fetching")
+                logging.warning(f"Could not fetch all events at once, falling back to iterative event fetching")
                 events.extend(get_events_iteratively(event, block, to_block, blocks_per_call=int(blocks_per_call / 2)))
                 break
             else:
@@ -39,7 +40,7 @@ def _get_events_iteratively_alchemy(event, from_block, to_block, blocks_per_call
     return events
 
 def setup_web3_provider(network, provider):
-    print(f"Setting up web3 provider for {network}")
+    logging.info(f"Setting up web3 provider for {network}")
 
     w3_provider = None
     if network == "ethereum":

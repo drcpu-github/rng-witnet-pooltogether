@@ -7,3 +7,4 @@ reports/
 
 config.json
 crontab.sh
+logs/*

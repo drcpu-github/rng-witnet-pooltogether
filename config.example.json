@@ -1,16 +1,17 @@
 {
     "goerli": {
-        "priority_fee": "",
-        "max_fee": "",
-        "max_data_request_fee": "",
-        "provider": "",
+        "max_gas_price": "10 gwei",
+        "priority_fee": "0.5 gwei",
+        "max_fee": "10 gwei",
+        "max_data_request_fee": "0.01 ether",
+        "provider": "alchemy",
         "prize_strategy_addresses": [
-            ""
+            "0xf201911c77bdff5d90fdaa5a3ca910dc880a316d"
         ],
         "remove_requesters": [],
-        "rng_witnet_address": "",
-        "rng_witnet_deploy_transaction": "",
-        "witnet_request_board_address": "",
-        "witnet_request_randomness_address": ""
+        "rng_witnet_address": "0x60F5E215070540604B69c5249eE606B310548135",
+        "rng_witnet_deploy_transaction": "0x38c260f52bc69bd4573fd2b3c41486ef5a8f274900e67d3e2025b7e4e14dcfb1",
+        "witnet_request_board_address": "0xb58D05247d16b3F1BD6B59c52f7f61fFef02BeC8",
+        "witnet_request_randomness_address": "0x6c0A28d0F19aE3338268535b9beF1b503Ee261fd"
     }
 }

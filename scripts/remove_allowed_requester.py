@@ -24,7 +24,7 @@ def main():
         transaction_parameters["priority_fee"] = network_config["priority_fee"]
         transaction_parameters["max_fee"] = network_config["max_fee"]
 
-    for address in network_config["prize_strategy_addresses"]:
+    for address in network_config["remove_requesters"]:
         rng_witnet.removeAllowedRequester(
             address,
             transaction_parameters,

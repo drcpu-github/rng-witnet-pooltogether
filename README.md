@@ -1,35 +1,40 @@
-## Introduction
+# Introduction
 
-The `RngWitnet.sol` contract is based on the RNGInterface contract provided by PoolTogether. Its goal is to fetch a single random number once a prize draw is completed. The cost for the RNG request is paid from the balance of the RNG contract.
+The `RngWitnet.sol` suite of contracts is an extension of the RNGInterface contract provided by PoolTogether. Its goal is to fetch a single random number to complete a prize draw. To achieve this it leverages the Witnet Randomness Oracle. The cost for the RNG request is paid from the balance of the RngWitnet contract.
 
-## Scripts
+## Deploy workflow
 
-A `deploy.py` script has been added to deploy the contract which requires a single argument (the WitnetRequestBoard address) in its constructor.
+Following command line examples will help you setup the RngWitnet suite on the Goerli network. Because Brownie does not allow passing parameters to its scripts, I use a `config.json` file to pass them.
 
-A set of scripts are provided to set some of the variables in the `RngWitnet.sol` contract:
-1. `set_max_fee.py`: used to the maximum fee to fetch a random number.
-2. `set_request.py`: sets the bytecode for a Witnet request.
-3. `add_allowed_requester.py`: add an address which can be used to fetch a random number.
-4. `fetch_rng.py`: serves as an example of automatically cycling through a complete RNG request.
+### Deploy the contracts
 
-## Command line examples
-
-Deploy the contract. The `WitnetRequestBoard` address which is dependent on the network can be configured in `config.json`.
+First deploy a `WitnetRequestRandomness` instance. If an instance already exists, the address of this instance can be specified in `config.json` and the `RngWitnet` contract will create a clone which is significantly cheaper. Once deployed, make sure to add the isntance's address to the `config.json` file.
 ```
-brownie run deploy.py deploy_goerli --network goerli-alchemy
+brownie run deploy_witnet_request_randomness --network goerli-alchemy
 ```
 
-Set the maximum allowed fee. This fee can be configured in `config.json`.
+After deploying a `WitnetRequestRandomness` instance or specifying a previously deployed instance, you can deploy the `RngWitnet` instance. Note that an instance of the `WitnetRequestBoard` needs to be configured in `config.json` and its address varies per network. For testing purposes (see below), the `main` function allows passing the address of a `WitnetRequestRandomness` instance, but this is irrelevant when actually deploying the contracts.
+```
+brownie run deploy_rng_witnet --network goerli-alchemy
+```
+
+### Configure the contract parameters
+
+Set the maximum amount of ETH that can be spent on a single randomness request. This fee can be configured in `config.json`.
 ```
 brownie run set_max_fee.py --network goerli-alchemy
 ```
 
-Set the Witnet request bytecode. This can be configured in `config.json`. The currently configured request can be found in `requests/RNG.js`. This request can be modified as required and encoded as bytecode using the `witnet-requests` npm distribution.
+Add one or more addresses that are allowed to fetch random numbers. These can be configured in `config.json`.
 ```
-brownie run set_request.py --network goerli-alchemy
+brownie run add_allowed_requester.py --network goerli-alchemy
 ```
 
-Add one or more addresses that are allowed to fetch random numbers. This can be configured in `config.json`.
+## Testing
+
+A set of tests has been included to test both the RngWitnet contract and the WitnetRequestRandomness contract. They can be run through the following command:
 ```
-brownie run add_allowed_requester.py add_requesters_goerli --network goerli-alchemy
+brownie test --disable-warnings
 ```
+
+Note the usage of `--disable-warnings` to prevent `eth-utils` warnings polluting the output. Remove the flag if you want to see them.

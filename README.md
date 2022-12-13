@@ -38,3 +38,21 @@ brownie test --disable-warnings
 ```
 
 Note the usage of `--disable-warnings` to prevent `eth-utils` warnings polluting the output. Remove the flag if you want to see them.
+
+## Deployments
+
+All required contracts have been deployed on following networks.
+
+### Ethereum
+
+|         Contract        |                   Address                   |
+|-------------------------|---------------------------------------------|
+| WitnetRequestRandomness | [0xb9C7D8dcEca7C830Bd0feF36cb9182822e165209](https://etherscan.io/address/0xb9C7D8dcEca7C830Bd0feF36cb9182822e165209) |
+| RngWitnet               | [0x0dca49d777fd938ee476d400d0b477222bd10aa9](https://etherscan.io/address/0x0dca49d777fd938ee476d400d0b477222bd10aa9) |
+
+### Polygon
+
+|         Contract        |                   Address                   |
+|-------------------------|---------------------------------------------|
+| WitnetRequestRandomness | [0x292db823328dcd6e486fd5ac423da4327cad1130](https://polygonscan.com/address/0x292db823328dcd6e486fd5ac423da4327cad1130) |
+| RngWitnet               | [0xdd9f0fa196931351b3bef9ab9458cacd349e63c2](https://polygonscan.com/address/0xdd9f0fa196931351b3bef9ab9458cacd349e63c2) |

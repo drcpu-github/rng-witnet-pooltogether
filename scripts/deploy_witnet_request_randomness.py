@@ -1,12 +1,18 @@
 import json
+import logging
+import time
 
 from brownie import WitnetRequestRandomness
+
+from util.logger import setup_stdout_logger
 
 from util.network_functions import get_account
 from util.network_functions import get_network
 from util.network_functions import is_local_network
 
 def main():
+    setup_stdout_logger()
+
     network = get_network()
 
     script_config = json.load(open("config.json"))
@@ -25,3 +31,16 @@ def main():
         transaction_parameters,
         publish_source=not is_local_network(),
     )
+
+    while True:
+        try:
+            return WitnetRequestRandomness.deploy(
+                transaction_parameters,
+                publish_source=not is_local_network(),
+            )
+        except ValueError as e:
+            if e.args[0] in ("transaction underpriced", "replacement transaction underpriced"):
+                logging.warning("Transaction underpriced, retrying in 60 seconds")
+                time.sleep(60)
+                continue
+            raise

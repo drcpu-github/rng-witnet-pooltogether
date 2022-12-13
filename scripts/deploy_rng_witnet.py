@@ -1,6 +1,10 @@
 import json
+import logging
+import time
 
 from brownie import RngWitnet, RngWitnetMock
+
+from util.logger import setup_stdout_logger
 
 from util.network_functions import get_account
 from util.network_functions import get_network
@@ -8,6 +12,8 @@ from util.network_functions import is_local_network
 from util.network_functions import is_testnet
 
 def main(_witnet_request_randomness_address="", _mockGas=0, _mockReward=0):
+    setup_stdout_logger()
+
     if is_testnet():
         assert _witnet_request_randomness_address == "", "On a testnet, _witnet_request_randomness_address should not be initialized"
         assert _mockGas == 0, "On a testnet, _mockGas should not be initialized"
@@ -45,9 +51,17 @@ def main(_witnet_request_randomness_address="", _mockGas=0, _mockReward=0):
             transaction_parameters,
         )
     else:
-        return RngWitnet.deploy(
-            network_config["witnet_request_board_address"],
-            witnet_request_randomness_address,
-            transaction_parameters,
-            publish_source=True,
-        )
+        while True:
+            try:
+                return RngWitnet.deploy(
+                    network_config["witnet_request_board_address"],
+                    witnet_request_randomness_address,
+                    transaction_parameters,
+                    publish_source=True,
+                )
+            except ValueError as e:
+                if e.args[0] in ("transaction underpriced", "replacement transaction underpriced"):
+                    logging.warning("Transaction underpriced, retrying in 60 seconds")
+                    time.sleep(60)
+                    continue
+                raise

@@ -8,7 +8,7 @@ Following command line examples will help you setup the RngWitnet suite on the G
 
 ### Deploy the contracts
 
-First deploy a `WitnetRequestRandomness` instance. If an instance already exists, the address of this instance can be specified in `config.json` and the `RngWitnet` contract will create a clone which is significantly cheaper. Once deployed, make sure to add the isntance's address to the `config.json` file.
+First deploy a `WitnetRequestRandomness` instance (based on [WitnetRequestMalleableBase](https://github.com/witnet/witnet-solidity-bridge/blob/master/contracts/requests/WitnetRequestMalleableBase.sol) from [guidiaz](https://github.com/guidiaz)). If an instance already exists, the address of this instance can be specified in `config.json` and the `RngWitnet` contract will create a clone which is significantly cheaper. Once deployed, make sure to add the isntance's address to the `config.json` file.
 ```
 brownie run deploy_witnet_request_randomness --network goerli-alchemy
 ```
@@ -56,3 +56,7 @@ All required contracts have been deployed on following networks.
 |-------------------------|---------------------------------------------|
 | WitnetRequestRandomness | [0x292db823328dcd6e486fd5ac423da4327cad1130](https://polygonscan.com/address/0x292db823328dcd6e486fd5ac423da4327cad1130) |
 | RngWitnet               | [0xdd9f0fa196931351b3bef9ab9458cacd349e63c2](https://polygonscan.com/address/0xdd9f0fa196931351b3bef9ab9458cacd349e63c2) |
+
+## Acknowledgements
+
+Thanks to all the people who reviewed the initial version of the contracts, especially to [guidiaz](https://github.com/guidiaz) for the thorough review and input.

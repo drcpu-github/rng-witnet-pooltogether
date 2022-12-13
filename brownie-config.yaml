@@ -10,5 +10,5 @@ compiler:
             - '@witnet/witnet-solidity-bridge=witnet/witnet-solidity-bridge@0.5.7'
 dotenv: .env
 wallets:
-    from_key_goerli: ${PRIVATE_KEY_GOERLI}
-    from_key_ethereum: ${PRIVATE_KEY_ETHEREUM}
+    from_key_testnet: ${PRIVATE_KEY_TESTNET}
+    from_key_mainnet: ${PRIVATE_KEY_MAINNET}

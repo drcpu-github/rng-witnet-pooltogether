@@ -33,7 +33,7 @@ def get_account(index=0):
         return accounts[index]
     else:
         if is_testnet():
-            accounts.add(config["wallets"]["from_key_goerli"])
+            accounts.add(config["wallets"]["from_key_testnet"])
         else:
-            accounts.add(config["wallets"]["from_key_ethereum"])
+            accounts.add(config["wallets"]["from_key_mainnet"])
         return accounts[0]

@@ -11,6 +11,8 @@ from web3 import Web3
 from util.helper_functions import get_events_alchemy
 from util.helper_functions import setup_web3_provider
 
+from util.logger import setup_stdout_logger
+
 from util.network_functions import get_account
 from util.network_functions import get_network
 
@@ -107,19 +109,7 @@ def complete_award(awards_started, transaction_parameters):
 def main():
     print("")
 
-    # Configure logger
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
-    # Add header formatting of the log message
-    logging.Formatter.converter = time.gmtime
-    formatter = logging.Formatter("[%(levelname)-8s] [%(asctime)s] %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
-
-    # Add console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.INFO)
-    logger.addHandler(console_handler)
+    setup_stdout_logger()
 
     load_dotenv()
 
